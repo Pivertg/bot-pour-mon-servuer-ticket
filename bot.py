@@ -11,7 +11,7 @@ MESSAGE_ID = 1437068922057785475  # ⚠️ ID du message (récupéré depuis set
 CHANNEL_ID = 1437062229856882818  # ⚠️ ID du channel (récupéré depuis setup.py)
 CATEGORY_ID = 1437062110017359873  # 📌 OPTIONNEL : ID de la catégorie où créer les tickets (None = pas de catégorie)
 
-STAFF_ROLE_IDS = [1437068002943176704]  # 📌 OPTIONNEL : ID du rôle staff qui peut voir les tickets (None = tout le monde)
+STAFF_ROLE_IDS = [1437068002943176704, 1437176877474119851]  # 📌 OPTIONNEL : ID du rôle staff qui peut voir les tickets (None = tout le monde)
 
 # ===== BOT SETUP =====
 intents = discord.Intents.default()
@@ -245,3 +245,4 @@ async def start_bot(token):
     except Exception as e:
         print(f"❌ Erreur lors du démarrage du bot : {e}", flush=True)
         raise
+
