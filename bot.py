@@ -9,11 +9,7 @@ sys.stdout.flush()
 # ===== CONFIGURATION =====
 MESSAGE_ID = 1437068922057785475  # ⚠️ ID du message (récupéré depuis setup.py)
 CHANNEL_ID = 1437062229856882818  # ⚠️ ID du channel (récupéré depuis setup.py)
-
-# 📁 Catégories pour chaque type de ticket (None = pas de catégorie)
-CATEGORY_ID_RECRUTEMENT = 1437184427242553505  # 📌 Catégorie pour les tickets "Recrutement"
-CATEGORY_ID_RENSEIGNEMENT = 1437184505768181831  # 📌 Catégorie pour les tickets "Renseignement"
-CATEGORY_ID_AUTRE = 1437184571803435231  # 📌 Catégorie pour les tickets "Autre Demande"
+CATEGORY_ID = 1437062110017359873  # 📌 OPTIONNEL : ID de la catégorie où créer les tickets (None = pas de catégorie)
 
 STAFF_ROLE_IDS = [1437068002943176704, 1437176877474119851]  # 📌 OPTIONNEL : ID du rôle staff qui peut voir les tickets (None = tout le monde)
 
@@ -150,7 +146,7 @@ async def create_ticket(interaction: discord.Interaction, ticket_type: str):
         guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True)
     }
     
-    # 🔧 CORRECTION : Boucle correctement indentée pour les rôles staff
+    # Ajoute les rôles staff
     for role_id in STAFF_ROLE_IDS:
         staff_role = guild.get_role(role_id)
         if staff_role:
@@ -171,14 +167,14 @@ async def create_ticket(interaction: discord.Interaction, ticket_type: str):
         # Stocke le ticket
         active_tickets[ticket_channel.id] = user.id
         
-        # 🔧 CORRECTION : Prépare les mentions des rôles staff
+        # Prépare les mentions des rôles staff
         staff_mentions = []
         for role_id in STAFF_ROLE_IDS:
             staff_role = guild.get_role(role_id)
             if staff_role:
                 staff_mentions.append(staff_role.mention)
         
-        # ===== MESSAGE DANS LE TICKET =====
+        # Message dans le ticket
         embed = discord.Embed(
             title="🎫 Ticket Ouvert",
             description=f"Bonjour {user.mention} !\n\n"
@@ -188,12 +184,11 @@ async def create_ticket(interaction: discord.Interaction, ticket_type: str):
             color=discord.Color.green()
         )
         embed.set_footer(text="Clique sur le bouton ci-dessous pour fermer le ticket")
-        # ===== FIN MESSAGE =====
         
-        # 🔧 CORRECTION : Utilise la vue persistante
+        # Vue avec bouton de fermeture
         close_view = CloseTicketView()
         
-        # 🔧 CORRECTION : Envoie le ping des staff AU-DESSUS de l'embed
+        # Envoie le ping des staff AU-DESSUS de l'embed
         staff_ping_text = " ".join(staff_mentions) if staff_mentions else ""
         await ticket_channel.send(content=staff_ping_text, embed=embed, view=close_view)
         
