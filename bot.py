@@ -240,6 +240,94 @@ async def close_ticket_callback(interaction: discord.Interaction):
     except Exception as e:
         print(f"❌ Erreur lors de la suppression du ticket : {e}", flush=True)
 
+# ===== COMMANDE ADD =====
+@bot.command(name="add")
+async def add_user(ctx, membre: discord.Member = None):
+    """Ajoute un membre au ticket (réservé au staff)"""
+    
+    print(f"➕ Commande +add appelée par {ctx.author.name} dans {ctx.channel.name}", flush=True)
+    
+    # Vérifie si on est dans un ticket
+    if ctx.channel.id not in active_tickets:
+        print(f"⚠️ {ctx.channel.name} n'est pas un ticket", flush=True)
+        await ctx.send("❌ Cette commande ne fonctionne que dans les tickets !", delete_after=5)
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+        return
+    
+    # Vérifie les permissions (avoir un des rôles staff OU être admin)
+    has_permission = False
+    
+    # Vérifie si l'utilisateur a un des rôles staff
+    for role_id in STAFF_ROLE_IDS:
+        role = ctx.guild.get_role(role_id)
+        if role and role in ctx.author.roles:
+            has_permission = True
+            break
+    
+    # Vérifie si l'utilisateur est administrateur
+    if ctx.author.guild_permissions.administrator:
+        has_permission = True
+    
+    if not has_permission:
+        print(f"❌ {ctx.author.name} n'a pas la permission", flush=True)
+        await ctx.send("❌ Tu n'as pas la permission d'ajouter quelqu'un à ce ticket !", delete_after=5)
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+        return
+    
+    # Vérifie si un membre a été mentionné
+    if not membre:
+        await ctx.send("❌ Usage : `+add @membre` ou `+add ID`", delete_after=5)
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+        return
+    
+    # Ajoute les permissions au membre
+    try:
+        await ctx.channel.set_permissions(
+            membre,
+            read_messages=True,
+            send_messages=True
+        )
+        
+        # Confirme l'ajout
+        embed = discord.Embed(
+            title="➕ Membre Ajouté",
+            description=f"{membre.mention} a été ajouté au ticket !",
+            color=discord.Color.green()
+        )
+        embed.set_footer(text=f"Ajouté par {ctx.author.name}")
+        await ctx.send(embed=embed)
+        
+        # Supprime la commande
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+        
+        print(f"✅ {membre.name} ajouté au ticket {ctx.channel.name} par {ctx.author.name}", flush=True)
+        
+    except discord.Forbidden:
+        await ctx.send("❌ Je n'ai pas la permission de modifier les permissions du channel !", delete_after=5)
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+    except Exception as e:
+        await ctx.send(f"❌ Erreur lors de l'ajout : {e}", delete_after=5)
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+        print(f"❌ Erreur ajout membre : {e}", flush=True)
+
 # ===== COMMANDE RENAME =====
 @bot.command(name="rename")
 async def rename_ticket(ctx, *, nouveau_nom: str = None):
