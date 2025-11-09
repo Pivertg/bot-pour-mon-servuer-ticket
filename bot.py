@@ -76,7 +76,7 @@ async def scan_existing_tickets():
     for guild in bot.guilds:
         for channel in guild.text_channels:
             # Vérifie si le nom du channel correspond à un ticket
-            if channel.name.startswith(("ticket-", "tech-", "demande-")):
+            if channel.name.startswith(("recrutement-", "renseignement-", "autre-")):
                 try:
                     # Récupère la partie après le tiret
                     user_part = channel.name.split("-", 1)[1]
@@ -132,9 +132,9 @@ async def create_ticket(interaction: discord.Interaction, ticket_type: str):
     
     # Nom du channel selon le type de ticket
     channel_names = {
-        "Recrutement": f"ticket-{user.name}",
-        "Renseignement": f"tech-{user.name}",
-        "Autre Demande": f"demande-{user.name}"
+        "Recrutement": f"recrutement-{user.name}",
+        "Renseignement": f"renseignement-{user.name}",
+        "Autre Demande": f"autre-{user.name}"
     }
     
     channel_name = channel_names.get(ticket_type, f"ticket-{user.name}")
