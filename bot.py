@@ -246,3 +246,4 @@ async def start_bot(token):
         print(f"❌ Erreur lors du démarrage du bot : {e}", flush=True)
         raise
 
+
