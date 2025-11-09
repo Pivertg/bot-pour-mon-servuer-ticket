@@ -240,6 +240,92 @@ async def close_ticket_callback(interaction: discord.Interaction):
     except Exception as e:
         print(f"❌ Erreur lors de la suppression du ticket : {e}", flush=True)
 
+# ===== COMMANDE RENAME =====
+@bot.command(name="rename")
+async def rename_ticket(ctx, *, nouveau_nom: str = None):
+    """Renomme le ticket actuel (réservé au staff)"""
+    
+    # Vérifie si on est dans un ticket
+    if ctx.channel.id not in active_tickets:
+        await ctx.send("❌ Cette commande ne fonctionne que dans les tickets !", delete_after=5)
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+        return
+    
+    # Vérifie les permissions (avoir un des rôles staff OU être admin)
+    has_permission = False
+    
+    # Vérifie si l'utilisateur a un des rôles staff
+    for role_id in STAFF_ROLE_IDS:
+        role = ctx.guild.get_role(role_id)
+        if role and role in ctx.author.roles:
+            has_permission = True
+            break
+    
+    # Vérifie si l'utilisateur est administrateur
+    if ctx.author.guild_permissions.administrator:
+        has_permission = True
+    
+    if not has_permission:
+        await ctx.send("❌ Tu n'as pas la permission de renommer ce ticket !", delete_after=5)
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+        return
+    
+    # Vérifie si un nouveau nom a été fourni
+    if not nouveau_nom:
+        await ctx.send("❌ Usage : `+rename nouveau-nom`", delete_after=5)
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+        return
+    
+    # Nettoie le nom (enlève les espaces, caractères spéciaux, etc.)
+    nouveau_nom = nouveau_nom.lower().replace(" ", "-")
+    # Garde seulement les caractères alphanumériques et tirets
+    nouveau_nom = "".join(c for c in nouveau_nom if c.isalnum() or c == "-")
+    
+    # Renomme le channel
+    try:
+        ancien_nom = ctx.channel.name
+        await ctx.channel.edit(name=nouveau_nom)
+        
+        # Confirme le renommage
+        embed = discord.Embed(
+            title="✏️ Ticket Renommé",
+            description=f"**Ancien nom :** `{ancien_nom}`\n**Nouveau nom :** `{nouveau_nom}`",
+            color=discord.Color.blue()
+        )
+        embed.set_footer(text=f"Renommé par {ctx.author.name}")
+        await ctx.send(embed=embed)
+        
+        # Supprime la commande
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+        
+        print(f"✏️ Ticket renommé : {ancien_nom} → {nouveau_nom} par {ctx.author.name}", flush=True)
+        
+    except discord.Forbidden:
+        await ctx.send("❌ Je n'ai pas la permission de renommer ce channel !", delete_after=5)
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+    except Exception as e:
+        await ctx.send(f"❌ Erreur lors du renommage : {e}", delete_after=5)
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+        print(f"❌ Erreur renommage : {e}", flush=True)
+
 # ===== FONCTION POUR MAIN.PY =====
 async def start_bot(token):
     """Fonction appelée par main.py pour démarrer le bot"""
