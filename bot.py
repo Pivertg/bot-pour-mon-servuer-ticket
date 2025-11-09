@@ -92,26 +92,23 @@ async def scan_existing_tickets():
 
                 except Exception as e:
                     print(f"⚠️ Erreur lors du scan de {channel.name} : {e}", flush=True)
-                        
-                except Exception as e:
-                    print(f"⚠️ Erreur lors du scan de {channel.name} : {e}", flush=True)
 
 # ===== VUE DES BOUTONS =====
 class TicketView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
     
-    @discord.ui.button(label="Recrutement", style=discord.ButtonStyle.success, custom_id="ticket_support")
-    async def support_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await create_ticket(interaction, "support")
+    @discord.ui.button(label="Recrutement", style=discord.ButtonStyle.success, custom_id="ticket_recrutement")
+    async def recrutement_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await create_ticket(interaction, "Recrutement")
     
-    @discord.ui.button(label="Renseignement", style=discord.ButtonStyle.danger, custom_id="ticket_technique")
-    async def technique_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await create_ticket(interaction, "technique")
+    @discord.ui.button(label="Renseignement", style=discord.ButtonStyle.danger, custom_id="ticket_renseignement")
+    async def renseignement_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await create_ticket(interaction, "Renseignement")
     
     @discord.ui.button(label="Autre Demande", style=discord.ButtonStyle.primary, custom_id="ticket_autre")
     async def autre_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await create_ticket(interaction, "autre")
+        await create_ticket(interaction, "Autre Demande")
 
 # ===== CRÉATION DE TICKET =====
 async def create_ticket(interaction: discord.Interaction, ticket_type: str):
@@ -135,12 +132,12 @@ async def create_ticket(interaction: discord.Interaction, ticket_type: str):
     
     # Nom du channel selon le type de ticket
     channel_names = {
-        "Recrutement": f"ticket-{user}",      # ticket-123456789
-        "Renseignement": f"tech-{user}",      # tech-123456789
-        "Autre Demande": f"demande-{user}"        # demande-123456789
+        "Recrutement": f"ticket-{user.name}",
+        "Renseignement": f"tech-{user.name}",
+        "Autre Demande": f"demande-{user.name}"
     }
     
-    channel_name = channel_names.get(ticket_type, f"ticket-{user }")
+    channel_name = channel_names.get(ticket_type, f"ticket-{user.name}")
     
     # Permissions du channel
     overwrites = {
@@ -149,12 +146,11 @@ async def create_ticket(interaction: discord.Interaction, ticket_type: str):
         guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True)
     }
     
-    # Ajoute le rôle staff si configuré
+    # 🔧 CORRECTION : Boucle correctement indentée pour les rôles staff
     for role_id in STAFF_ROLE_IDS:
         staff_role = guild.get_role(role_id)
-    if staff_role:
-        overwrites[staff_role] = discord.PermissionOverwrite(read_messages=True, send_messages=True)
-
+        if staff_role:
+            overwrites[staff_role] = discord.PermissionOverwrite(read_messages=True, send_messages=True)
     
     # Récupère la catégorie si configurée
     category = guild.get_channel(CATEGORY_ID) if CATEGORY_ID else None
@@ -165,11 +161,18 @@ async def create_ticket(interaction: discord.Interaction, ticket_type: str):
             name=channel_name,
             overwrites=overwrites,
             category=category,
-            topic=f"Ticket de {user.name} ({user})"
+            topic=f"Ticket de {user.name} ({user.id})"
         )
         
         # Stocke le ticket
         active_tickets[ticket_channel.id] = user.id
+        
+        # 🔧 CORRECTION : Prépare les mentions des rôles staff
+        staff_mentions = []
+        for role_id in STAFF_ROLE_IDS:
+            staff_role = guild.get_role(role_id)
+            if staff_role:
+                staff_mentions.append(staff_role.mention)
         
         # ===== MESSAGE DANS LE TICKET =====
         embed = discord.Embed(
@@ -177,7 +180,7 @@ async def create_ticket(interaction: discord.Interaction, ticket_type: str):
             description=f"Bonjour {user.mention} !\n\n"
                         f"Merci d'avoir ouvert un ticket.\n"
                         f"Un membre du staff va te répondre rapidement.\n\n"
-                        f"**Type de ticket :** {ticket_type.capitalize()}",
+                        f"**Type de ticket :** {ticket_type}",
             color=discord.Color.green()
         )
         embed.set_footer(text="Clique sur le bouton ci-dessous pour fermer le ticket")
@@ -186,7 +189,9 @@ async def create_ticket(interaction: discord.Interaction, ticket_type: str):
         # 🔧 CORRECTION : Utilise la vue persistante
         close_view = CloseTicketView()
         
-        await ticket_channel.send(embed=embed, view=close_view)
+        # 🔧 CORRECTION : Envoie le ping des staff AU-DESSUS de l'embed
+        staff_ping_text = " ".join(staff_mentions) if staff_mentions else ""
+        await ticket_channel.send(content=staff_ping_text, embed=embed, view=close_view)
         
         # Répond à l'interaction
         await interaction.response.send_message(
@@ -227,7 +232,7 @@ async def close_ticket_callback(interaction: discord.Interaction):
     
     print(f"🔒 Fermeture du ticket : {channel.name} (User: {user_id})", flush=True)
     
-    # Attend 5 secondes puis supprime le channel
+    # Attend 3 secondes puis supprime le channel
     await asyncio.sleep(3)
     
     try:
@@ -245,5 +250,3 @@ async def start_bot(token):
     except Exception as e:
         print(f"❌ Erreur lors du démarrage du bot : {e}", flush=True)
         raise
-
-
