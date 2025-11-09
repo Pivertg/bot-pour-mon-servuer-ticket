@@ -18,7 +18,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
 intents.members = True
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = commands.Bot(command_prefix="+", intents=intents)
 
 # Stockage en mémoire des tickets ouverts
 active_tickets = {}  # {channel_id: user_id}
@@ -245,8 +245,12 @@ async def close_ticket_callback(interaction: discord.Interaction):
 async def rename_ticket(ctx, *, nouveau_nom: str = None):
     """Renomme le ticket actuel (réservé au staff)"""
     
+    print(f"🔧 Commande +rename appelée par {ctx.author.name} dans {ctx.channel.name}", flush=True)
+    
     # Vérifie si on est dans un ticket
     if ctx.channel.id not in active_tickets:
+        print(f"⚠️ {ctx.channel.name} n'est pas dans active_tickets", flush=True)
+        print(f"📋 Tickets actifs : {list(active_tickets.keys())}", flush=True)
         await ctx.send("❌ Cette commande ne fonctionne que dans les tickets !", delete_after=5)
         try:
             await ctx.message.delete()
@@ -257,18 +261,26 @@ async def rename_ticket(ctx, *, nouveau_nom: str = None):
     # Vérifie les permissions (avoir un des rôles staff OU être admin)
     has_permission = False
     
+    print(f"🔍 Vérification des permissions pour {ctx.author.name}", flush=True)
+    print(f"👤 Rôles de l'utilisateur : {[role.name for role in ctx.author.roles]}", flush=True)
+    
     # Vérifie si l'utilisateur a un des rôles staff
     for role_id in STAFF_ROLE_IDS:
         role = ctx.guild.get_role(role_id)
-        if role and role in ctx.author.roles:
-            has_permission = True
-            break
+        if role:
+            print(f"🔎 Vérification du rôle staff : {role.name} (ID: {role_id})", flush=True)
+            if role in ctx.author.roles:
+                has_permission = True
+                print(f"✅ {ctx.author.name} a le rôle {role.name}", flush=True)
+                break
     
     # Vérifie si l'utilisateur est administrateur
     if ctx.author.guild_permissions.administrator:
         has_permission = True
+        print(f"✅ {ctx.author.name} est administrateur", flush=True)
     
     if not has_permission:
+        print(f"❌ {ctx.author.name} n'a pas la permission", flush=True)
         await ctx.send("❌ Tu n'as pas la permission de renommer ce ticket !", delete_after=5)
         try:
             await ctx.message.delete()
@@ -278,6 +290,7 @@ async def rename_ticket(ctx, *, nouveau_nom: str = None):
     
     # Vérifie si un nouveau nom a été fourni
     if not nouveau_nom:
+        print(f"⚠️ Aucun nouveau nom fourni", flush=True)
         await ctx.send("❌ Usage : `+rename nouveau-nom`", delete_after=5)
         try:
             await ctx.message.delete()
@@ -285,10 +298,14 @@ async def rename_ticket(ctx, *, nouveau_nom: str = None):
             pass
         return
     
+    print(f"📝 Nouveau nom demandé : {nouveau_nom}", flush=True)
+    
     # Nettoie le nom (enlève les espaces, caractères spéciaux, etc.)
     nouveau_nom = nouveau_nom.lower().replace(" ", "-")
     # Garde seulement les caractères alphanumériques et tirets
     nouveau_nom = "".join(c for c in nouveau_nom if c.isalnum() or c == "-")
+    
+    print(f"📝 Nouveau nom nettoyé : {nouveau_nom}", flush=True)
     
     # Renomme le channel
     try:
@@ -313,18 +330,19 @@ async def rename_ticket(ctx, *, nouveau_nom: str = None):
         print(f"✏️ Ticket renommé : {ancien_nom} → {nouveau_nom} par {ctx.author.name}", flush=True)
         
     except discord.Forbidden:
+        print(f"❌ Permission refusée pour renommer", flush=True)
         await ctx.send("❌ Je n'ai pas la permission de renommer ce channel !", delete_after=5)
         try:
             await ctx.message.delete()
         except:
             pass
     except Exception as e:
+        print(f"❌ Erreur renommage : {e}", flush=True)
         await ctx.send(f"❌ Erreur lors du renommage : {e}", delete_after=5)
         try:
             await ctx.message.delete()
         except:
             pass
-        print(f"❌ Erreur renommage : {e}", flush=True)
 
 # ===== FONCTION POUR MAIN.PY =====
 async def start_bot(token):
