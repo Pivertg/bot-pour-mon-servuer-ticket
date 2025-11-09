@@ -9,7 +9,11 @@ sys.stdout.flush()
 # ===== CONFIGURATION =====
 MESSAGE_ID = 1437068922057785475  # ⚠️ ID du message (récupéré depuis setup.py)
 CHANNEL_ID = 1437062229856882818  # ⚠️ ID du channel (récupéré depuis setup.py)
-CATEGORY_ID = 1437062110017359873  # 📌 OPTIONNEL : ID de la catégorie où créer les tickets (None = pas de catégorie)
+
+# 📁 Catégories pour chaque type de ticket (None = pas de catégorie)
+CATEGORY_ID_RECRUTEMENT = 1437184427242553505  # 📌 Catégorie pour les tickets "Recrutement"
+CATEGORY_ID_RENSEIGNEMENT = 1437184505768181831  # 📌 Catégorie pour les tickets "Renseignement"
+CATEGORY_ID_AUTRE = 1437184571803435231  # 📌 Catégorie pour les tickets "Autre Demande"
 
 STAFF_ROLE_IDS = [1437068002943176704, 1437176877474119851]  # 📌 OPTIONNEL : ID du rôle staff qui peut voir les tickets (None = tout le monde)
 
